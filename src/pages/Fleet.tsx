@@ -1,101 +1,16 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Truck, Search, Plus, AlertCircle, CheckCircle, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Truck, Search, AlertCircle, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { useVehicles } from "@/hooks/useVehicles";
+import { useRegions } from "@/hooks/useRegions";
+import AddVehicleDialog from "@/components/AddVehicleDialog";
+import { useUserRole } from "@/hooks/useUserRole";
 
-type VehicleStatus = "Ready" | "Commissioning" | "Out-of-Service" | "Draft";
-type VehicleType = "ALS" | "BLS" | "CCT" | "Supervisor";
-
-interface Vehicle {
-  id: string;
-  vin: string;
-  plate: string;
-  make: string;
-  model: string;
-  year: number;
-  type: VehicleType;
-  region: string;
-  status: VehicleStatus;
-  tasksComplete: number;
-  tasksTotal: number;
-  nextInspection?: string;
-}
-
-const mockVehicles: Vehicle[] = [
-  {
-    id: "E450-OC-1023",
-    vin: "1FDXE45P84HB12345",
-    plate: "AMB-1023",
-    make: "Ford",
-    model: "E-450",
-    year: 2023,
-    type: "ALS",
-    region: "OC",
-    status: "Ready",
-    tasksComplete: 45,
-    tasksTotal: 45,
-    nextInspection: "2025-02-15",
-  },
-  {
-    id: "SPRINTER-LA-2041",
-    vin: "WD3PE8CD5E5123456",
-    plate: "AMB-2041",
-    make: "Mercedes",
-    model: "Sprinter",
-    year: 2024,
-    type: "BLS",
-    region: "LA",
-    status: "Commissioning",
-    tasksComplete: 32,
-    tasksTotal: 45,
-  },
-  {
-    id: "F350-UCI-3015",
-    vin: "1FT8W3BT8GEB12345",
-    plate: "AMB-3015",
-    make: "Ford",
-    model: "F-350",
-    year: 2023,
-    type: "CCT",
-    region: "UCI",
-    status: "Commissioning",
-    tasksComplete: 18,
-    tasksTotal: 50,
-  },
-  {
-    id: "TAHOE-KP-4002",
-    vin: "1GNSKCKD2JR123456",
-    plate: "SUP-4002",
-    make: "Chevrolet",
-    model: "Tahoe",
-    year: 2022,
-    type: "Supervisor",
-    region: "KP",
-    status: "Ready",
-    tasksComplete: 30,
-    tasksTotal: 30,
-    nextInspection: "2025-03-01",
-  },
-  {
-    id: "E450-RIV-5008",
-    vin: "1FDXE45P85HB67890",
-    plate: "AMB-5008",
-    make: "Ford",
-    model: "E-450",
-    year: 2021,
-    type: "ALS",
-    region: "RIV",
-    status: "Out-of-Service",
-    tasksComplete: 45,
-    tasksTotal: 45,
-  },
-];
-
-const statusConfig: Record<VehicleStatus, { variant: "default" | "secondary" | "destructive" | "outline"; icon: any }> = {
+const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: any }> = {
   Ready: { variant: "default", icon: CheckCircle },
   Commissioning: { variant: "secondary", icon: Clock },
   "Out-of-Service": { variant: "destructive", icon: AlertCircle },
@@ -107,17 +22,27 @@ export default function Fleet() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [regionFilter, setRegionFilter] = useState<string>("all");
 
-  const filteredVehicles = mockVehicles.filter((vehicle) => {
+  const { data: vehicles, isLoading } = useVehicles();
+  const { data: regions } = useRegions();
+  const { canEditVehicles } = useUserRole();
+
+  const filteredVehicles = (vehicles || []).filter((vehicle) => {
     const matchesSearch =
-      vehicle.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vehicle.vehicle_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.plate.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
-    const matchesRegion = regionFilter === "all" || vehicle.region === regionFilter;
+    const matchesRegion = regionFilter === "all" || vehicle.regions?.code === regionFilter;
     return matchesSearch && matchesStatus && matchesRegion;
   });
 
-  const regions = ["OC", "LA", "UCI", "KP", "RIV"];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -126,29 +51,18 @@ export default function Fleet() {
           <h1 className="text-3xl font-bold mb-2">Fleet Management</h1>
           <p className="text-muted-foreground">Vehicle tracking and commissioning</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Vehicle
-        </Button>
+        {canEditVehicles && regions && <AddVehicleDialog regions={regions} />}
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search vehicles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+              <Input placeholder="Search vehicles..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Filter by status" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="Ready">Ready</SelectItem>
@@ -158,15 +72,11 @@ export default function Fleet() {
               </SelectContent>
             </Select>
             <Select value={regionFilter} onValueChange={setRegionFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by region" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Filter by region" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Regions</SelectItem>
-                {regions.map((region) => (
-                  <SelectItem key={region} value={region}>
-                    {region}
-                  </SelectItem>
+                {(regions || []).map((region) => (
+                  <SelectItem key={region.id} value={region.code}>{region.code}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -174,22 +84,19 @@ export default function Fleet() {
         </CardContent>
       </Card>
 
-      {/* Vehicle Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredVehicles.map((vehicle) => {
-          const StatusIcon = statusConfig[vehicle.status].icon;
-          const progress = Math.round((vehicle.tasksComplete / vehicle.tasksTotal) * 100);
-
+          const StatusIcon = statusConfig[vehicle.status]?.icon || Clock;
           return (
-            <Link key={vehicle.id} to={`/fleet/${vehicle.id}`}>
+            <Link key={vehicle.id} to={`/fleet/${vehicle.vehicle_id}`}>
               <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <Truck className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-lg">{vehicle.id}</CardTitle>
+                      <CardTitle className="text-lg">{vehicle.vehicle_id}</CardTitle>
                     </div>
-                    <Badge variant={statusConfig[vehicle.status].variant} className="gap-1">
+                    <Badge variant={statusConfig[vehicle.status]?.variant || "outline"} className="gap-1">
                       <StatusIcon className="h-3 w-3" />
                       {vehicle.status}
                     </Badge>
@@ -198,44 +105,12 @@ export default function Fleet() {
                 <CardContent>
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="text-muted-foreground">Type</p>
-                        <p className="font-medium">{vehicle.type}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Region</p>
-                        <p className="font-medium">{vehicle.region}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Plate</p>
-                        <p className="font-medium">{vehicle.plate}</p>
-                      </div>
-                      <div>
-                        <p className="text-muted-foreground">Year</p>
-                        <p className="font-medium">{vehicle.year}</p>
-                      </div>
+                      <div><p className="text-muted-foreground">Type</p><p className="font-medium">{vehicle.type}</p></div>
+                      <div><p className="text-muted-foreground">Region</p><p className="font-medium">{vehicle.regions?.code || 'N/A'}</p></div>
+                      <div><p className="text-muted-foreground">Plate</p><p className="font-medium">{vehicle.plate}</p></div>
+                      <div><p className="text-muted-foreground">Year</p><p className="font-medium">{vehicle.year}</p></div>
                     </div>
-
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-muted-foreground">Commissioning</span>
-                        <span className="font-medium">
-                          {vehicle.tasksComplete}/{vehicle.tasksTotal}
-                        </span>
-                      </div>
-                      <div className="w-full bg-secondary rounded-full h-2">
-                        <div
-                          className="bg-primary rounded-full h-2 transition-all"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {vehicle.nextInspection && (
-                      <div className="text-xs text-muted-foreground">
-                        Next inspection: {new Date(vehicle.nextInspection).toLocaleDateString()}
-                      </div>
-                    )}
+                    <div className="text-xs text-muted-foreground">{vehicle.make} {vehicle.model}</div>
                   </div>
                 </CardContent>
               </Card>

@@ -1,7 +1,9 @@
-import { Link, useLocation } from "react-router-dom";
-import { Activity, Truck, BarChart3, Menu } from "lucide-react";
+import { Link, useLocation, Outlet } from "react-router-dom";
+import { Activity, Truck, BarChart3, Menu, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { path: "/", label: "Operations", icon: Activity },
@@ -9,8 +11,9 @@ const navItems = [
   { path: "/executive", label: "Executive", icon: BarChart3 },
 ];
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const NavLinks = () => (
     <>
@@ -47,6 +50,25 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <NavLinks />
           </nav>
 
+          {/* User Menu */}
+          <div className="hidden md:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           {/* Mobile Navigation */}
           <Sheet>
             <SheetTrigger asChild className="md:hidden">
@@ -57,6 +79,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <SheetContent side="right">
               <nav className="flex flex-col gap-2 mt-8">
                 <NavLinks />
+                <Button variant="ghost" onClick={signOut} className="justify-start">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
               </nav>
             </SheetContent>
           </Sheet>
@@ -64,7 +90,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">{children}</main>
+      <main className="container mx-auto px-4 py-6">
+        <Outlet />
+      </main>
     </div>
   );
 }

@@ -14,16 +14,495 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: string | null
+          entity: string
+          entity_id: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: string | null
+          entity: string
+          entity_id: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: string | null
+          entity?: string
+          entity_id?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evidence_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          task_id: string | null
+          uploaded_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          task_id?: string | null
+          uploaded_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          task_id?: string | null
+          uploaded_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_files_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_files_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evidence_files_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspections: {
+        Row: {
+          created_at: string | null
+          findings: string | null
+          id: string
+          inspector: string | null
+          result: Database["public"]["Enums"]["inspection_result"] | null
+          scheduled_date: string
+          type: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          findings?: string | null
+          id?: string
+          inspector?: string | null
+          result?: Database["public"]["Enums"]["inspection_result"] | null
+          scheduled_date: string
+          type: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          findings?: string | null
+          id?: string
+          inspector?: string | null
+          result?: Database["public"]["Enums"]["inspection_result"] | null
+          scheduled_date?: string
+          type?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      regions: {
+        Row: {
+          cert_checklist_url: string | null
+          code: string
+          created_at: string | null
+          id: string
+          name: string
+          policy_links: string | null
+        }
+        Insert: {
+          cert_checklist_url?: string | null
+          code: string
+          created_at?: string | null
+          id?: string
+          name: string
+          policy_links?: string | null
+        }
+        Update: {
+          cert_checklist_url?: string | null
+          code?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          policy_links?: string | null
+        }
+        Relationships: []
+      }
+      task_templates: {
+        Row: {
+          created_at: string | null
+          dependent_step_id: string | null
+          evidence_type: string | null
+          id: string
+          name: string
+          region_id: string | null
+          requires_approval: boolean | null
+          requires_evidence: boolean | null
+          sla_hours: number | null
+          step_category: Database["public"]["Enums"]["task_category"]
+          step_name: string
+          step_order: number
+          template_id: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          created_at?: string | null
+          dependent_step_id?: string | null
+          evidence_type?: string | null
+          id?: string
+          name: string
+          region_id?: string | null
+          requires_approval?: boolean | null
+          requires_evidence?: boolean | null
+          sla_hours?: number | null
+          step_category: Database["public"]["Enums"]["task_category"]
+          step_name: string
+          step_order: number
+          template_id: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          created_at?: string | null
+          dependent_step_id?: string | null
+          evidence_type?: string | null
+          id?: string
+          name?: string
+          region_id?: string | null
+          requires_approval?: boolean | null
+          requires_evidence?: boolean | null
+          sla_hours?: number | null
+          step_category?: Database["public"]["Enums"]["task_category"]
+          step_name?: string
+          step_order?: number
+          template_id?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_templates_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_tasks: {
+        Row: {
+          approved_by: string | null
+          approved_on: string | null
+          assignee_id: string | null
+          created_at: string | null
+          due_date: string | null
+          evidence_url: string | null
+          id: string
+          notes: string | null
+          percent_complete: number | null
+          requires_approval: boolean | null
+          requires_evidence: boolean | null
+          sla_hours: number | null
+          status: Database["public"]["Enums"]["task_status"]
+          step_category: Database["public"]["Enums"]["task_category"]
+          step_name: string
+          template_id: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          approved_on?: string | null
+          assignee_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          percent_complete?: number | null
+          requires_approval?: boolean | null
+          requires_evidence?: boolean | null
+          sla_hours?: number | null
+          status?: Database["public"]["Enums"]["task_status"]
+          step_category: Database["public"]["Enums"]["task_category"]
+          step_name: string
+          template_id?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          approved_on?: string | null
+          assignee_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          percent_complete?: number | null
+          requires_approval?: boolean | null
+          requires_evidence?: boolean | null
+          sla_hours?: number | null
+          status?: Database["public"]["Enums"]["task_status"]
+          step_category?: Database["public"]["Enums"]["task_category"]
+          step_name?: string
+          template_id?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_tasks_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_tasks_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          fuel_type: string | null
+          id: string
+          in_service_date: string | null
+          last_chp_inspection: string | null
+          lytx_id: string | null
+          make: string
+          model: string
+          next_chp_inspection: string | null
+          odometer: number | null
+          plate: string
+          primary_depot: string | null
+          radio_id: string | null
+          region_id: string | null
+          status: Database["public"]["Enums"]["vehicle_status"]
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at: string | null
+          vehicle_id: string
+          vin: string
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          fuel_type?: string | null
+          id?: string
+          in_service_date?: string | null
+          last_chp_inspection?: string | null
+          lytx_id?: string | null
+          make: string
+          model: string
+          next_chp_inspection?: string | null
+          odometer?: number | null
+          plate: string
+          primary_depot?: string | null
+          radio_id?: string | null
+          region_id?: string | null
+          status?: Database["public"]["Enums"]["vehicle_status"]
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+          vehicle_id: string
+          vin: string
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          fuel_type?: string | null
+          id?: string
+          in_service_date?: string | null
+          last_chp_inspection?: string | null
+          lytx_id?: string | null
+          make?: string
+          model?: string
+          next_chp_inspection?: string | null
+          odometer?: number | null
+          plate?: string
+          primary_depot?: string | null
+          radio_id?: string | null
+          region_id?: string | null
+          status?: Database["public"]["Enums"]["vehicle_status"]
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+          vehicle_id?: string
+          vin?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "supervisor" | "technician" | "viewer"
+      inspection_result: "Pass" | "Fail" | "Pending"
+      task_category:
+        | "Safety"
+        | "Compliance"
+        | "Logistics"
+        | "IT"
+        | "Branding"
+        | "Clinical"
+        | "Admin"
+      task_status:
+        | "Not Started"
+        | "In Progress"
+        | "Blocked"
+        | "Submitted"
+        | "Approved"
+        | "Rejected"
+      vehicle_status:
+        | "Draft"
+        | "Commissioning"
+        | "Ready"
+        | "Out-of-Service"
+        | "Decommissioned"
+      vehicle_type: "ALS" | "BLS" | "CCT" | "Supervisor" | "Other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +629,34 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "supervisor", "technician", "viewer"],
+      inspection_result: ["Pass", "Fail", "Pending"],
+      task_category: [
+        "Safety",
+        "Compliance",
+        "Logistics",
+        "IT",
+        "Branding",
+        "Clinical",
+        "Admin",
+      ],
+      task_status: [
+        "Not Started",
+        "In Progress",
+        "Blocked",
+        "Submitted",
+        "Approved",
+        "Rejected",
+      ],
+      vehicle_status: [
+        "Draft",
+        "Commissioning",
+        "Ready",
+        "Out-of-Service",
+        "Decommissioned",
+      ],
+      vehicle_type: ["ALS", "BLS", "CCT", "Supervisor", "Other"],
+    },
   },
 } as const
