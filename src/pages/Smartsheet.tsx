@@ -6,8 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { FileSpreadsheet, RefreshCw, Loader2, CheckSquare } from "lucide-react";
+import { FileSpreadsheet, RefreshCw, Loader2, CheckSquare, Download, Database, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { useSmartsheetSync } from "@/hooks/useSmartsheetSync";
+import { exportToCSV } from "@/utils/csvExport";
 
 interface SmartsheetSheet {
   id: string;
@@ -52,6 +55,7 @@ export default function Smartsheet() {
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(false);
   const { toast } = useToast();
+  const { configs, logs, addSyncConfig, toggleSync, manualSync, refreshLogs } = useSmartsheetSync();
 
   const loadAvailableSheets = useCallback(async () => {
     setLoading(true);
@@ -152,6 +156,20 @@ export default function Smartsheet() {
     }
   };
 
+  const handleExportCSV = (sheet: SheetData) => {
+    if (sheet.data) {
+      exportToCSV(sheet.data);
+      toast({
+        title: "Export complete",
+        description: `Exported ${sheet.data.name} to CSV`,
+      });
+    }
+  };
+
+  const handleEnableSync = async (sheetId: string, sheetName: string) => {
+    await addSyncConfig(sheetId, sheetName);
+  };
+
   const renderSheetData = (sheet: SheetData) => {
     if (sheet.error) {
       return (
@@ -169,18 +187,43 @@ export default function Smartsheet() {
 
     const columns = sheet.data.columns || [];
     const rows = sheet.data.rows || [];
+    const isSyncEnabled = configs.some(c => c.sheet_id === sheet.sheetId && c.sync_enabled);
 
     return (
       <Card key={sheet.sheetId}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5" />
-            {sheet.data.name}
-          </CardTitle>
-          <CardDescription>
-            {rows.length} rows · {columns.length} columns
-            {sheet.data.modifiedAt && ` · Last modified: ${new Date(sheet.data.modifiedAt).toLocaleString()}`}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileSpreadsheet className="h-5 w-5" />
+                {sheet.data.name}
+              </CardTitle>
+              <CardDescription>
+                {rows.length} rows · {columns.length} columns
+                {sheet.data.modifiedAt && ` · Last modified: ${new Date(sheet.data.modifiedAt).toLocaleString()}`}
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleExportCSV(sheet)}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              {!isSyncEnabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEnableSync(sheet.sheetId, sheet.data!.name)}
+                >
+                  <Database className="h-4 w-4 mr-2" />
+                  Enable Auto-Sync
+                </Button>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -234,6 +277,8 @@ export default function Smartsheet() {
           <TabsTrigger value="data" disabled={sheetData.length === 0}>
             View Data ({sheetData.length})
           </TabsTrigger>
+          <TabsTrigger value="sync">Auto-Sync ({configs.length})</TabsTrigger>
+          <TabsTrigger value="history">Sync History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="select" className="space-y-4">
@@ -317,6 +362,114 @@ export default function Smartsheet() {
 
         <TabsContent value="data" className="space-y-4">
           {sheetData.map(renderSheetData)}
+        </TabsContent>
+
+        <TabsContent value="sync" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Automatic Sync Configuration</CardTitle>
+              <CardDescription>
+                Configure sheets to sync automatically every 5 minutes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {configs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No auto-sync configured yet</p>
+                  <p className="text-sm mt-2">Fetch sheets and enable auto-sync from the View Data tab</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {configs.map((config) => (
+                    <div
+                      key={config.id}
+                      className="flex items-center justify-between p-4 rounded-lg border"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{config.sheet_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Sync every {config.sync_interval_minutes} minutes
+                          {config.last_synced_at && (
+                            <> · Last synced: {new Date(config.last_synced_at).toLocaleString()}</>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {config.sync_enabled ? 'Enabled' : 'Disabled'}
+                          </span>
+                          <Switch
+                            checked={config.sync_enabled}
+                            onCheckedChange={(checked) => toggleSync(config.id, checked)}
+                          />
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => manualSync([config.sheet_id])}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Sync Now
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sync History</CardTitle>
+              <CardDescription>
+                Recent automatic sync operations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {logs.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No sync history yet</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sheet ID</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Rows Synced</TableHead>
+                      <TableHead>Time</TableHead>
+                      <TableHead>Error</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {logs.map((log) => (
+                      <TableRow key={log.id}>
+                        <TableCell className="font-mono text-xs">{log.sheet_id}</TableCell>
+                        <TableCell>
+                          <Badge variant={log.status === 'success' ? 'default' : 'destructive'}>
+                            {log.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{log.rows_synced ?? '-'}</TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(log.synced_at).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-xs text-destructive">
+                          {log.error_message || '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

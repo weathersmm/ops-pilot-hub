@@ -7,6 +7,7 @@ import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
 import { sanitizeCsvCell, vehicleTypeEnum, vehicleStatusEnum, taskStepCategoryEnum } from "@/lib/validation";
+import { Database } from "@/integrations/supabase/types";
 
 export default function CsvImport() {
   const [loading, setLoading] = useState(false);
@@ -94,10 +95,10 @@ export default function CsvImport() {
         template_id: string;
         name: string;
         region_id: null;
-        vehicle_type: string;
+        vehicle_type: Database["public"]["Enums"]["vehicle_type"];
         step_order: number;
         step_name: string;
-        step_category: string;
+        step_category: Database["public"]["Enums"]["task_category"];
         sla_hours: number;
         requires_evidence: boolean;
         requires_approval: boolean;
@@ -114,10 +115,10 @@ export default function CsvImport() {
             template_id: validated.TemplateId,
             name: validated.Name,
             region_id: null,
-            vehicle_type: validated.VehicleType,
+            vehicle_type: validated.VehicleType as Database["public"]["Enums"]["vehicle_type"],
             step_order: validated.StepOrder,
             step_name: validated.StepName,
-            step_category: validated.StepCategory,
+            step_category: validated.StepCategory as Database["public"]["Enums"]["task_category"],
             sla_hours: validated.SLAHours || 24,
             requires_evidence: validated.RequiresEvidence,
             requires_approval: validated.RequiresApproval,
@@ -136,15 +137,14 @@ export default function CsvImport() {
       const BATCH_SIZE = 100;
       for (let i = 0; i < validatedRows.length; i += BATCH_SIZE) {
         const batch = validatedRows.slice(i, i + BATCH_SIZE);
-        const { error, count } = await supabase
+        const { error } = await supabase
           .from("task_templates")
-          .insert(batch)
-          .select('*', { count: 'exact', head: true });
+          .insert(batch);
 
         if (error) {
           errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
         } else {
-          successCount += count || batch.length;
+          successCount += batch.length;
         }
       }
 
@@ -196,9 +196,9 @@ export default function CsvImport() {
         make: string;
         model: string;
         year: number;
-        type: string;
+        type: Database["public"]["Enums"]["vehicle_type"];
         region_id: string | null;
-        status: string;
+        status: Database["public"]["Enums"]["vehicle_status"];
         commissioning_template: string | null;
         odometer: number;
         fuel_type: string | null;
@@ -222,9 +222,9 @@ export default function CsvImport() {
             make: validated.Make,
             model: validated.Model,
             year: validated.Year,
-            type: validated.Type,
+            type: validated.Type as Database["public"]["Enums"]["vehicle_type"],
             region_id: regionMap.get(row.Region) || null,
-            status: validated.Status || 'Draft',
+            status: (validated.Status || 'Draft') as Database["public"]["Enums"]["vehicle_status"],
             commissioning_template: row.CommissioningTemplate || null,
             odometer: parseInt(row.Odometer || '0') || 0,
             fuel_type: row.FuelType || null,
@@ -247,15 +247,14 @@ export default function CsvImport() {
       const BATCH_SIZE = 100;
       for (let i = 0; i < validatedRows.length; i += BATCH_SIZE) {
         const batch = validatedRows.slice(i, i + BATCH_SIZE);
-        const { error, count } = await supabase
+        const { error } = await supabase
           .from("vehicles")
-          .insert(batch)
-          .select('*', { count: 'exact', head: true });
+          .insert(batch);
 
         if (error) {
           errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
         } else {
-          successCount += count || batch.length;
+          successCount += batch.length;
         }
       }
 

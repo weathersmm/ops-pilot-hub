@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,6 +8,9 @@ const corsHeaders = {
 
 const SMARTSHEET_API_KEY = Deno.env.get('SMARTSHEET_API_KEY');
 const SMARTSHEET_BASE_URL = 'https://api.smartsheet.com/2.0';
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -19,6 +23,7 @@ serve(async (req) => {
       throw new Error('SMARTSHEET_API_KEY is not configured');
     }
 
+    const supabase = createClient(supabaseUrl, supabaseKey);
     const { action, sheetIds } = await req.json();
 
     console.log('Smartsheet request:', { action, sheetIds });
@@ -43,6 +48,77 @@ serve(async (req) => {
       console.log('Retrieved sheets list:', data.data?.length || 0, 'sheets');
       
       return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Sync data to database
+    if (action === 'sync' && sheetIds && Array.isArray(sheetIds)) {
+      let totalSynced = 0;
+      
+      for (const sheetId of sheetIds) {
+        try {
+          const response = await fetch(`${SMARTSHEET_BASE_URL}/sheets/${sheetId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${SMARTSHEET_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            const error = await response.text();
+            console.error(`Error fetching sheet ${sheetId}:`, response.status, error);
+            
+            await supabase.from('smartsheet_sync_log').insert({
+              sheet_id: sheetId,
+              status: 'error',
+              error_message: `Failed to fetch: ${response.status}`
+            });
+            continue;
+          }
+
+          const data = await response.json();
+          
+          // Store each row in the database
+          const rows = data.rows || [];
+          for (const row of rows) {
+            await supabase.from('smartsheet_data').upsert({
+              sheet_id: sheetId,
+              sheet_name: data.name,
+              row_id: String(row.id),
+              row_data: row,
+              synced_at: new Date().toISOString()
+            }, {
+              onConflict: 'sheet_id,row_id'
+            });
+          }
+
+          // Update sync config
+          await supabase
+            .from('smartsheet_sync_config')
+            .update({ last_synced_at: new Date().toISOString() })
+            .eq('sheet_id', sheetId);
+
+          // Log success
+          await supabase.from('smartsheet_sync_log').insert({
+            sheet_id: sheetId,
+            status: 'success',
+            rows_synced: rows.length
+          });
+
+          totalSynced += rows.length;
+        } catch (error: unknown) {
+          console.error(`Error syncing sheet ${sheetId}:`, error);
+          await supabase.from('smartsheet_sync_log').insert({
+            sheet_id: sheetId,
+            status: 'error',
+            error_message: error instanceof Error ? error.message : 'Unknown error'
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ synced: totalSynced }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
