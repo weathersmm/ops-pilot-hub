@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
+import { sanitizeCsvCell, vehicleTypeEnum, vehicleStatusEnum, taskStepCategoryEnum } from "@/lib/validation";
 
 export default function CsvImport() {
   const [loading, setLoading] = useState(false);
@@ -16,23 +17,13 @@ export default function CsvImport() {
   });
   const { toast } = useToast();
 
-  // Sanitize CSV cell to prevent formula injection
-  const sanitizeCell = (value: string): string => {
-    const trimmed = value.trim();
-    if (trimmed.startsWith('=') || trimmed.startsWith('+') || 
-        trimmed.startsWith('-') || trimmed.startsWith('@')) {
-      return "'" + trimmed; // Escape formula characters
-    }
-    return trimmed;
-  };
-
   const parseCSV = (text: string): Record<string, string>[] => {
     const lines = text.split('\n').filter(l => l.trim());
     if (lines.length === 0) return [];
     
     const headers = lines[0].split(',').map(h => h.trim());
     return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => sanitizeCell(v));
+      const values = line.split(',').map(v => sanitizeCsvCell(v));
       return headers.reduce((obj, header, idx) => {
         obj[header] = values[idx] || '';
         return obj;
@@ -44,14 +35,14 @@ export default function CsvImport() {
   const taskTemplateSchema = z.object({
     TemplateId: z.string().trim().min(1).max(100),
     Name: z.string().trim().min(1).max(200),
-    VehicleType: z.enum(['ALS', 'BLS', 'CCT', 'Supervisor', 'Other']),
+    VehicleType: vehicleTypeEnum,
     StepOrder: z.string().regex(/^\d+$/).transform(val => {
       const num = parseInt(val);
       if (isNaN(num) || num < 0) throw new Error('Invalid step order');
       return num;
     }),
     StepName: z.string().trim().min(1).max(200),
-    StepCategory: z.enum(['Admin', 'Safety', 'Compliance', 'Clinical', 'Logistics', 'IT', 'Branding']),
+    StepCategory: taskStepCategoryEnum,
     SLAHours: z.string().regex(/^\d+$/).transform(val => {
       const num = parseInt(val);
       if (isNaN(num) || num < 1 || num > 720) throw new Error('SLA hours must be 1-720');
@@ -74,8 +65,8 @@ export default function CsvImport() {
     Make: z.string().trim().min(1).max(100),
     Model: z.string().trim().min(1).max(100),
     Plate: z.string().trim().min(1).max(20),
-    Type: z.enum(['ALS', 'BLS', 'CCT', 'Supervisor', 'Other']),
-    Status: z.enum(['Draft', 'Commissioning', 'Ready', 'Out-of-Service', 'Decommissioned']).optional()
+    Type: vehicleTypeEnum,
+    Status: vehicleStatusEnum.optional()
   });
 
   const importTaskTemplates = async (file: File) => {

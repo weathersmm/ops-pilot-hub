@@ -9,18 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { z } from "zod";
-
-const vehicleFormSchema = z.object({
-  vehicle_id: z.string().trim().min(1, "Vehicle ID is required").max(50, "Vehicle ID must be less than 50 characters"),
-  vin: z.string().trim().length(17, "VIN must be exactly 17 characters").regex(/^[A-HJ-NPR-Z0-9]+$/i, "VIN contains invalid characters"),
-  plate: z.string().trim().min(1, "License plate is required").max(20, "License plate must be less than 20 characters"),
-  make: z.string().trim().min(1, "Make is required").max(100, "Make must be less than 100 characters"),
-  model: z.string().trim().min(1, "Model is required").max(100, "Model must be less than 100 characters"),
-  year: z.number().int("Year must be a whole number").min(1900, "Year must be 1900 or later").max(2100, "Year must be 2100 or earlier"),
-  type: z.enum(["ALS", "BLS", "CCT", "Supervisor", "Other"]),
-  region_id: z.string().min(1, "Region is required").uuid("Invalid region selected"),
-});
+import { vehicleFormSchema } from "@/lib/validation";
 
 interface AddVehicleDialogProps {
   regions: Array<{ id: string; code: string; name: string }>;
