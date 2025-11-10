@@ -12,6 +12,7 @@ import VehicleDetail from "./pages/VehicleDetail";
 import Executive from "./pages/Executive";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import Smartsheet from "./pages/Smartsheet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="fleet" element={<Fleet />} />
             <Route path="fleet/:id" element={<VehicleDetail />} />
             <Route path="executive" element={<Executive />} />
+            <Route path="smartsheet" element={<Smartsheet />} />
             <Route path="admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<NotFound />} />
           </Route>

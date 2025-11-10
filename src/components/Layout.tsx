@@ -1,5 +1,5 @@
 import { Link, useLocation, Outlet } from "react-router-dom";
-import { Activity, Truck, BarChart3, Menu, LogOut, User } from "lucide-react";
+import { Activity, Truck, BarChart3, Menu, LogOut, User, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -9,6 +9,7 @@ const navItems = [
   { path: "/", label: "Operations", icon: Activity },
   { path: "/fleet", label: "Fleet", icon: Truck },
   { path: "/executive", label: "Executive", icon: BarChart3 },
+  { path: "/smartsheet", label: "Smartsheet", icon: FileSpreadsheet },
   { path: "/admin", label: "Admin", icon: Menu },
 ];
 
