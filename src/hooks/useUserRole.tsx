@@ -4,6 +4,37 @@ import { useAuth } from "./useAuth";
 
 type Role = "admin" | "supervisor" | "technician" | "viewer" | null;
 
+/**
+ * Client-side role checks for UI rendering ONLY.
+ * 
+ * ⚠️ SECURITY WARNING: Never rely on these checks for security decisions.
+ * All sensitive operations are protected server-side via RLS policies.
+ * These helpers are purely for improving user experience by hiding
+ * unavailable functionality.
+ * 
+ * @example
+ * // ✅ CORRECT: Use for UI rendering
+ * const { canEditVehicles } = useUserRole();
+ * {canEditVehicles && <EditButton />}
+ * 
+ * // ❌ INCORRECT: Never use for security decisions
+ * // All security must be enforced via RLS policies on the database
+ * 
+ * @security
+ * When implementing edge functions, ALWAYS validate roles server-side:
+ * ```typescript
+ * const { data: { user } } = await supabase.auth.getUser();
+ * const { data: roleData } = await supabase
+ *   .from('user_roles')
+ *   .select('role')
+ *   .eq('user_id', user.id)
+ *   .single();
+ * 
+ * if (roleData?.role !== 'admin') {
+ *   return new Response('Forbidden', { status: 403 });
+ * }
+ * ```
+ */
 export function useUserRole() {
   const { user } = useAuth();
   const [role, setRole] = useState<Role>(null);
