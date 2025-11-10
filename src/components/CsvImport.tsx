@@ -89,12 +89,28 @@ export default function CsvImport() {
         throw new Error('File exceeds 1000 row limit');
       }
 
-      for (const row of rows) {
+      // Optimized: Validate all rows first, then batch insert
+      const validatedRows: Array<{
+        template_id: string;
+        name: string;
+        region_id: null;
+        vehicle_type: string;
+        step_order: number;
+        step_name: string;
+        step_category: string;
+        sla_hours: number;
+        requires_evidence: boolean;
+        requires_approval: boolean;
+        evidence_type: string | null;
+        dependent_step_id: string | null;
+      }> = [];
+
+      // Validate all rows
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         try {
-          // Validate row data
           const validated = taskTemplateSchema.parse(row);
-          
-          const { error } = await supabase.from("task_templates").insert([{
+          validatedRows.push({
             template_id: validated.TemplateId,
             name: validated.Name,
             region_id: null,
@@ -107,18 +123,28 @@ export default function CsvImport() {
             requires_approval: validated.RequiresApproval,
             evidence_type: validated.EvidenceType || null,
             dependent_step_id: validated.DependentStepId || null
-          }]);
-
-          if (error) {
-            errors.push(`Row ${successCount + errors.length + 1}: ${error.message}`);
-          } else {
-            successCount++;
-          }
+          });
         } catch (err) {
           const errorMsg = err instanceof z.ZodError 
             ? err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
             : err instanceof Error ? err.message : 'Unknown error';
-          errors.push(`Row ${successCount + errors.length + 1}: ${errorMsg}`);
+          errors.push(`Row ${i + 1}: ${errorMsg}`);
+        }
+      }
+
+      // Batch insert: Process in chunks of 100 for better performance
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < validatedRows.length; i += BATCH_SIZE) {
+        const batch = validatedRows.slice(i, i + BATCH_SIZE);
+        const { error, count } = await supabase
+          .from("task_templates")
+          .insert(batch)
+          .select('*', { count: 'exact', head: true });
+
+        if (error) {
+          errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
+        } else {
+          successCount += count || batch.length;
         }
       }
 
@@ -127,10 +153,10 @@ export default function CsvImport() {
         title: "Import complete",
         description: `Imported ${successCount} task template steps`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Import failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive",
       });
     } finally {
@@ -158,16 +184,38 @@ export default function CsvImport() {
         throw new Error('File exceeds 1000 row limit');
       }
 
-      // Get region mapping
+      // Get region mapping once before processing
       const { data: regions } = await supabase.from("regions").select("id, code");
       const regionMap = new Map(regions?.map(r => [r.code, r.id]) || []);
 
-      for (const row of rows) {
+      // Optimized: Validate all rows first, then batch insert
+      const validatedRows: Array<{
+        vehicle_id: string;
+        vin: string;
+        plate: string;
+        make: string;
+        model: string;
+        year: number;
+        type: string;
+        region_id: string | null;
+        status: string;
+        commissioning_template: string | null;
+        odometer: number;
+        fuel_type: string | null;
+        in_service_date: string | null;
+        primary_depot: string | null;
+        radio_id: string | null;
+        lytx_id: string | null;
+        last_chp_inspection: string | null;
+        next_chp_inspection: string | null;
+      }> = [];
+
+      // Validate all rows
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         try {
-          // Validate row data
           const validated = vehicleSchema.parse(row);
-          
-          const { error } = await supabase.from("vehicles").insert([{
+          validatedRows.push({
             vehicle_id: validated.VehicleId,
             vin: validated.VIN,
             plate: validated.Plate,
@@ -186,18 +234,28 @@ export default function CsvImport() {
             lytx_id: row.LytxId || null,
             last_chp_inspection: row.LastCHPInspection || null,
             next_chp_inspection: row.NextCHPInspection || null
-          }]);
-
-          if (error) {
-            errors.push(`${validated.VehicleId}: ${error.message}`);
-          } else {
-            successCount++;
-          }
+          });
         } catch (err) {
           const errorMsg = err instanceof z.ZodError 
             ? err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
             : err instanceof Error ? err.message : 'Unknown error';
-          errors.push(`Row ${successCount + errors.length + 1}: ${errorMsg}`);
+          errors.push(`Row ${i + 1}: ${errorMsg}`);
+        }
+      }
+
+      // Batch insert: Process in chunks of 100 for better performance
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < validatedRows.length; i += BATCH_SIZE) {
+        const batch = validatedRows.slice(i, i + BATCH_SIZE);
+        const { error, count } = await supabase
+          .from("vehicles")
+          .insert(batch)
+          .select('*', { count: 'exact', head: true });
+
+        if (error) {
+          errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
+        } else {
+          successCount += count || batch.length;
         }
       }
 
@@ -206,10 +264,10 @@ export default function CsvImport() {
         title: "Import complete",
         description: `Imported ${successCount} vehicles`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Import failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive",
       });
     } finally {

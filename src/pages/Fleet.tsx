@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { useRegions } from "@/hooks/useRegions";
 import AddVehicleDialog from "@/components/AddVehicleDialog";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: any }> = {
+const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; icon: typeof CheckCircle }> = {
   Ready: { variant: "default", icon: CheckCircle },
   Commissioning: { variant: "secondary", icon: Clock },
   "Out-of-Service": { variant: "destructive", icon: AlertCircle },
@@ -26,15 +26,20 @@ export default function Fleet() {
   const { data: regions } = useRegions();
   const { canEditVehicles } = useUserRole();
 
-  const filteredVehicles = (vehicles || []).filter((vehicle) => {
-    const matchesSearch =
-      vehicle.vehicle_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.plate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
-    const matchesRegion = regionFilter === "all" || vehicle.regions?.code === regionFilter;
-    return matchesSearch && matchesStatus && matchesRegion;
-  });
+  // Memoize filtered vehicles to avoid recalculating on every render
+  const filteredVehicles = useMemo(() => {
+    if (!vehicles) return [];
+    
+    return vehicles.filter((vehicle) => {
+      const matchesSearch =
+        vehicle.vehicle_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vehicle.plate.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        vehicle.vin.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter;
+      const matchesRegion = regionFilter === "all" || vehicle.regions?.code === regionFilter;
+      return matchesSearch && matchesStatus && matchesRegion;
+    });
+  }, [vehicles, searchQuery, statusFilter, regionFilter]);
 
   if (isLoading) {
     return (

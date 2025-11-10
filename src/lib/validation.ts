@@ -70,7 +70,7 @@ export const uuidSchema = z.string().uuid("Invalid ID format");
 export const phoneSchema = z
   .string()
   .trim()
-  .regex(/^[\d\s\-\(\)\+]+$/, "Invalid phone number format")
+  .regex(/^[\d\s\-()+]+$/, "Invalid phone number format")
   .min(10, "Phone number must be at least 10 digits")
   .max(20, "Phone number must be less than 20 characters");
 

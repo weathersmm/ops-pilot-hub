@@ -35,6 +35,7 @@ export function useVehicle(id: string) {
       if (error) throw error;
       return data;
     },
+    enabled: !!id,
   });
 }
 
@@ -42,27 +43,22 @@ export function useVehicleTasks(vehicleId: string) {
   return useQuery({
     queryKey: ["vehicle-tasks", vehicleId],
     queryFn: async () => {
-      const { data: vehicle } = await supabase
-        .from("vehicles")
-        .select("id")
-        .eq("vehicle_id", vehicleId)
-        .single();
-
-      if (!vehicle) return [];
-
+      // Optimized: Single query using join instead of two sequential queries
       const { data, error } = await supabase
         .from("vehicle_tasks")
         .select(`
           *,
+          vehicles!inner (vehicle_id),
           assignee:profiles!vehicle_tasks_assignee_id_fkey (id, full_name, email),
           approver:profiles!vehicle_tasks_approved_by_fkey (id, full_name, email)
         `)
-        .eq("vehicle_id", vehicle.id)
+        .eq("vehicles.vehicle_id", vehicleId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
+    enabled: !!vehicleId,
   });
 }
 
@@ -70,22 +66,19 @@ export function useInspections(vehicleId: string) {
   return useQuery({
     queryKey: ["inspections", vehicleId],
     queryFn: async () => {
-      const { data: vehicle } = await supabase
-        .from("vehicles")
-        .select("id")
-        .eq("vehicle_id", vehicleId)
-        .single();
-
-      if (!vehicle) return [];
-
+      // Optimized: Single query using join instead of two sequential queries
       const { data, error } = await supabase
         .from("inspections")
-        .select("*")
-        .eq("vehicle_id", vehicle.id)
+        .select(`
+          *,
+          vehicles!inner (vehicle_id)
+        `)
+        .eq("vehicles.vehicle_id", vehicleId)
         .order("scheduled_date", { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
+    enabled: !!vehicleId,
   });
 }
