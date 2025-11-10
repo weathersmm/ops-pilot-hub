@@ -52,6 +52,279 @@ export type Database = {
           },
         ]
       }
+      demo_evidence_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          task_id: string | null
+          uploaded_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          task_id?: string | null
+          uploaded_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          task_id?: string | null
+          uploaded_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
+      demo_inspections: {
+        Row: {
+          created_at: string | null
+          findings: string | null
+          id: string
+          inspector: string | null
+          result: Database["public"]["Enums"]["inspection_result"] | null
+          scheduled_date: string
+          type: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          findings?: string | null
+          id?: string
+          inspector?: string | null
+          result?: Database["public"]["Enums"]["inspection_result"] | null
+          scheduled_date: string
+          type: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          findings?: string | null
+          id?: string
+          inspector?: string | null
+          result?: Database["public"]["Enums"]["inspection_result"] | null
+          scheduled_date?: string
+          type?: string
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
+      demo_vehicle_equipment: {
+        Row: {
+          created_at: string | null
+          equipment_id: string
+          id: string
+          installed_date: string | null
+          last_service_date: string | null
+          next_service_date: string | null
+          notes: string | null
+          serial_number: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          equipment_id: string
+          id?: string
+          installed_date?: string | null
+          last_service_date?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          equipment_id?: string
+          id?: string
+          installed_date?: string | null
+          last_service_date?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
+      demo_vehicle_tasks: {
+        Row: {
+          approved_by: string | null
+          approved_on: string | null
+          assignee_id: string | null
+          created_at: string | null
+          due_date: string | null
+          evidence_url: string | null
+          id: string
+          notes: string | null
+          percent_complete: number | null
+          requires_approval: boolean | null
+          requires_evidence: boolean | null
+          sla_hours: number | null
+          status: Database["public"]["Enums"]["task_status"]
+          step_category: Database["public"]["Enums"]["task_category"]
+          step_name: string
+          template_id: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          approved_on?: string | null
+          assignee_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          percent_complete?: number | null
+          requires_approval?: boolean | null
+          requires_evidence?: boolean | null
+          sla_hours?: number | null
+          status?: Database["public"]["Enums"]["task_status"]
+          step_category: Database["public"]["Enums"]["task_category"]
+          step_name: string
+          template_id?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          approved_on?: string | null
+          assignee_id?: string | null
+          created_at?: string | null
+          due_date?: string | null
+          evidence_url?: string | null
+          id?: string
+          notes?: string | null
+          percent_complete?: number | null
+          requires_approval?: boolean | null
+          requires_evidence?: boolean | null
+          sla_hours?: number | null
+          status?: Database["public"]["Enums"]["task_status"]
+          step_category?: Database["public"]["Enums"]["task_category"]
+          step_name?: string
+          template_id?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: []
+      }
+      demo_vehicles: {
+        Row: {
+          build_type: string | null
+          chp_permit: string | null
+          commissioning_template: string | null
+          created_at: string | null
+          created_by: string | null
+          dmv_expiration: string | null
+          fuel_type: string | null
+          id: string
+          in_service_date: string | null
+          la_county_expiration: string | null
+          last_chp_inspection: string | null
+          lytx_id: string | null
+          make: string
+          mod_type: string | null
+          model: string
+          next_chp_inspection: string | null
+          oc_expiration: string | null
+          odometer: number | null
+          plate: string
+          primary_depot: string | null
+          radio_id: string | null
+          region_id: string | null
+          riverside_expiration: string | null
+          smog_expiration: string | null
+          status: Database["public"]["Enums"]["vehicle_status"]
+          status_date: string | null
+          type: Database["public"]["Enums"]["vehicle_type"]
+          updated_at: string | null
+          vehicle_id: string
+          vin: string
+          year: number
+        }
+        Insert: {
+          build_type?: string | null
+          chp_permit?: string | null
+          commissioning_template?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          dmv_expiration?: string | null
+          fuel_type?: string | null
+          id?: string
+          in_service_date?: string | null
+          la_county_expiration?: string | null
+          last_chp_inspection?: string | null
+          lytx_id?: string | null
+          make: string
+          mod_type?: string | null
+          model: string
+          next_chp_inspection?: string | null
+          oc_expiration?: string | null
+          odometer?: number | null
+          plate: string
+          primary_depot?: string | null
+          radio_id?: string | null
+          region_id?: string | null
+          riverside_expiration?: string | null
+          smog_expiration?: string | null
+          status?: Database["public"]["Enums"]["vehicle_status"]
+          status_date?: string | null
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+          vehicle_id: string
+          vin: string
+          year: number
+        }
+        Update: {
+          build_type?: string | null
+          chp_permit?: string | null
+          commissioning_template?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          dmv_expiration?: string | null
+          fuel_type?: string | null
+          id?: string
+          in_service_date?: string | null
+          la_county_expiration?: string | null
+          last_chp_inspection?: string | null
+          lytx_id?: string | null
+          make?: string
+          mod_type?: string | null
+          model?: string
+          next_chp_inspection?: string | null
+          oc_expiration?: string | null
+          odometer?: number | null
+          plate?: string
+          primary_depot?: string | null
+          radio_id?: string | null
+          region_id?: string | null
+          riverside_expiration?: string | null
+          smog_expiration?: string | null
+          status?: Database["public"]["Enums"]["vehicle_status"]
+          status_date?: string | null
+          type?: Database["public"]["Enums"]["vehicle_type"]
+          updated_at?: string | null
+          vehicle_id?: string
+          vin?: string
+          year?: number
+        }
+        Relationships: []
+      }
       equipment_catalog: {
         Row: {
           category: string | null
@@ -220,6 +493,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          tenant_type: Database["public"]["Enums"]["tenant_type"]
           updated_at: string | null
         }
         Insert: {
@@ -228,6 +502,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          tenant_type?: Database["public"]["Enums"]["tenant_type"]
           updated_at?: string | null
         }
         Update: {
@@ -236,6 +511,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          tenant_type?: Database["public"]["Enums"]["tenant_type"]
           updated_at?: string | null
         }
         Relationships: []
@@ -264,6 +540,96 @@ export type Database = {
           id?: string
           name?: string
           policy_links?: string | null
+        }
+        Relationships: []
+      }
+      smartsheet_data: {
+        Row: {
+          created_at: string
+          id: string
+          row_data: Json
+          row_id: string
+          sheet_id: string
+          sheet_name: string
+          synced_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          row_data: Json
+          row_id: string
+          sheet_id: string
+          sheet_name: string
+          synced_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          row_data?: Json
+          row_id?: string
+          sheet_id?: string
+          sheet_name?: string
+          synced_at?: string
+        }
+        Relationships: []
+      }
+      smartsheet_sync_config: {
+        Row: {
+          created_at: string
+          id: string
+          last_synced_at: string | null
+          sheet_id: string
+          sheet_name: string
+          sync_enabled: boolean
+          sync_interval_minutes: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          sheet_id: string
+          sheet_name: string
+          sync_enabled?: boolean
+          sync_interval_minutes?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_synced_at?: string | null
+          sheet_id?: string
+          sheet_name?: string
+          sync_enabled?: boolean
+          sync_interval_minutes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      smartsheet_sync_log: {
+        Row: {
+          error_message: string | null
+          id: string
+          rows_synced: number | null
+          sheet_id: string
+          status: string
+          synced_at: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          rows_synced?: number | null
+          sheet_id: string
+          status: string
+          synced_at?: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          rows_synced?: number | null
+          sheet_id?: string
+          status?: string
+          synced_at?: string
         }
         Relationships: []
       }
@@ -681,6 +1047,7 @@ export type Database = {
         | "Submitted"
         | "Approved"
         | "Rejected"
+      tenant_type: "internal" | "demo"
       vehicle_status:
         | "Draft"
         | "Commissioning"
@@ -834,6 +1201,7 @@ export const Constants = {
         "Approved",
         "Rejected",
       ],
+      tenant_type: ["internal", "demo"],
       vehicle_status: [
         "Draft",
         "Commissioning",
