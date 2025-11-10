@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { z } from "zod";
 
 export default function CsvImport() {
   const [loading, setLoading] = useState(false);
@@ -15,19 +16,67 @@ export default function CsvImport() {
   });
   const { toast } = useToast();
 
+  // Sanitize CSV cell to prevent formula injection
+  const sanitizeCell = (value: string): string => {
+    const trimmed = value.trim();
+    if (trimmed.startsWith('=') || trimmed.startsWith('+') || 
+        trimmed.startsWith('-') || trimmed.startsWith('@')) {
+      return "'" + trimmed; // Escape formula characters
+    }
+    return trimmed;
+  };
+
   const parseCSV = (text: string): Record<string, string>[] => {
     const lines = text.split('\n').filter(l => l.trim());
     if (lines.length === 0) return [];
     
     const headers = lines[0].split(',').map(h => h.trim());
     return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim());
+      const values = line.split(',').map(v => sanitizeCell(v));
       return headers.reduce((obj, header, idx) => {
         obj[header] = values[idx] || '';
         return obj;
       }, {} as Record<string, string>);
     });
   };
+
+  // Zod schemas for validation
+  const taskTemplateSchema = z.object({
+    TemplateId: z.string().trim().min(1).max(100),
+    Name: z.string().trim().min(1).max(200),
+    VehicleType: z.enum(['ALS', 'BLS', 'CCT', 'Supervisor', 'Other']),
+    StepOrder: z.string().regex(/^\d+$/).transform(val => {
+      const num = parseInt(val);
+      if (isNaN(num) || num < 0) throw new Error('Invalid step order');
+      return num;
+    }),
+    StepName: z.string().trim().min(1).max(200),
+    StepCategory: z.enum(['Admin', 'Safety', 'Compliance', 'Clinical', 'Logistics', 'IT', 'Branding']),
+    SLAHours: z.string().regex(/^\d+$/).transform(val => {
+      const num = parseInt(val);
+      if (isNaN(num) || num < 1 || num > 720) throw new Error('SLA hours must be 1-720');
+      return num;
+    }).optional(),
+    RequiresApproval: z.string().transform(val => val.toLowerCase() === 'true'),
+    RequiresEvidence: z.string().transform(val => val.toLowerCase() === 'true'),
+    EvidenceType: z.string().trim().max(50).optional(),
+    DependentStepId: z.string().trim().max(100).optional()
+  });
+
+  const vehicleSchema = z.object({
+    VehicleId: z.string().trim().min(1).max(50),
+    VIN: z.string().trim().length(17),
+    Year: z.string().regex(/^\d{4}$/).transform(val => {
+      const num = parseInt(val);
+      if (isNaN(num) || num < 1900 || num > 2100) throw new Error('Invalid year');
+      return num;
+    }),
+    Make: z.string().trim().min(1).max(100),
+    Model: z.string().trim().min(1).max(100),
+    Plate: z.string().trim().min(1).max(20),
+    Type: z.enum(['ALS', 'BLS', 'CCT', 'Supervisor', 'Other']),
+    Status: z.enum(['Draft', 'Commissioning', 'Ready', 'Out-of-Service', 'Decommissioned']).optional()
+  });
 
   const importTaskTemplates = async (file: File) => {
     setLoading(true);
@@ -36,32 +85,49 @@ export default function CsvImport() {
 
     try {
       const text = await file.text();
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size exceeds 5MB limit');
+      }
+      
       const rows = parseCSV(text);
+      
+      // Validate row count (max 1000 rows)
+      if (rows.length > 1000) {
+        throw new Error('File exceeds 1000 row limit');
+      }
 
       for (const row of rows) {
         try {
+          // Validate row data
+          const validated = taskTemplateSchema.parse(row);
+          
           const { error } = await supabase.from("task_templates").insert([{
-            template_id: row.TemplateId,
-            name: row.Name,
+            template_id: validated.TemplateId,
+            name: validated.Name,
             region_id: null,
-            vehicle_type: (row.VehicleType || 'ALS') as any,
-            step_order: parseInt(row.StepOrder),
-            step_name: row.StepName,
-            step_category: row.StepCategory as any,
-            sla_hours: parseInt(row.SLAHours),
-            requires_evidence: row.RequiresEvidence === 'True',
-            requires_approval: row.RequiresApproval === 'True',
-            evidence_type: row.EvidenceType || null,
-            dependent_step_id: row.DependentStepId || null
+            vehicle_type: validated.VehicleType,
+            step_order: validated.StepOrder,
+            step_name: validated.StepName,
+            step_category: validated.StepCategory,
+            sla_hours: validated.SLAHours || 24,
+            requires_evidence: validated.RequiresEvidence,
+            requires_approval: validated.RequiresApproval,
+            evidence_type: validated.EvidenceType || null,
+            dependent_step_id: validated.DependentStepId || null
           }]);
 
           if (error) {
-            errors.push(`Row ${row.StepOrder}: ${error.message}`);
+            errors.push(`Row ${successCount + errors.length + 1}: ${error.message}`);
           } else {
             successCount++;
           }
-        } catch (err: any) {
-          errors.push(`Row ${row.StepOrder}: ${err.message}`);
+        } catch (err) {
+          const errorMsg = err instanceof z.ZodError 
+            ? err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+            : err instanceof Error ? err.message : 'Unknown error';
+          errors.push(`Row ${successCount + errors.length + 1}: ${errorMsg}`);
         }
       }
 
@@ -88,7 +154,18 @@ export default function CsvImport() {
 
     try {
       const text = await file.text();
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size exceeds 5MB limit');
+      }
+      
       const rows = parseCSV(text);
+      
+      // Validate row count (max 1000 rows)
+      if (rows.length > 1000) {
+        throw new Error('File exceeds 1000 row limit');
+      }
 
       // Get region mapping
       const { data: regions } = await supabase.from("regions").select("id, code");
@@ -96,18 +173,21 @@ export default function CsvImport() {
 
       for (const row of rows) {
         try {
+          // Validate row data
+          const validated = vehicleSchema.parse(row);
+          
           const { error } = await supabase.from("vehicles").insert([{
-            vehicle_id: row.VehicleId,
-            vin: row.VIN,
-            plate: row.Plate || null,
-            make: row.Make,
-            model: row.Model,
-            year: parseInt(row.Year) || new Date().getFullYear(),
-            type: row.Type as any || 'Other',
+            vehicle_id: validated.VehicleId,
+            vin: validated.VIN,
+            plate: validated.Plate,
+            make: validated.Make,
+            model: validated.Model,
+            year: validated.Year,
+            type: validated.Type,
             region_id: regionMap.get(row.Region) || null,
-            status: row.Status as any || 'Draft',
+            status: validated.Status || 'Draft',
             commissioning_template: row.CommissioningTemplate || null,
-            odometer: parseInt(row.Odometer) || 0,
+            odometer: parseInt(row.Odometer || '0') || 0,
             fuel_type: row.FuelType || null,
             in_service_date: row.InServiceDate || null,
             primary_depot: row.PrimaryDepot || null,
@@ -118,12 +198,15 @@ export default function CsvImport() {
           }]);
 
           if (error) {
-            errors.push(`${row.VehicleId}: ${error.message}`);
+            errors.push(`${validated.VehicleId}: ${error.message}`);
           } else {
             successCount++;
           }
-        } catch (err: any) {
-          errors.push(`${row.VehicleId}: ${err.message}`);
+        } catch (err) {
+          const errorMsg = err instanceof z.ZodError 
+            ? err.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+            : err instanceof Error ? err.message : 'Unknown error';
+          errors.push(`Row ${successCount + errors.length + 1}: ${errorMsg}`);
         }
       }
 
