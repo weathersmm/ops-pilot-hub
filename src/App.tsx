@@ -3,13 +3,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import TenantRoute from "./components/TenantRoute";
 import { Loader2 } from "lucide-react";
 import { isDemoMode } from "@/config/appMode";
+import { isLandingEntry, isInternalEntry, isDemoEntry } from "@/config/entryMode";
 
 // Lazy load pages for better code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -19,6 +20,7 @@ const Executive = lazy(() => import("./pages/Executive"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Smartsheet = lazy(() => import("./pages/Smartsheet"));
+const Landing = lazy(() => import("./pages/Landing"));
 const DemoLanding = lazy(() => import("./pages/DemoLanding"));
 const DemoAuth = lazy(() => import("./pages/DemoAuth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -51,8 +53,31 @@ const App = () => (
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Demo mode routes */}
-            {isDemoMode && (
+            {/* Landing entry mode - fleet.ewproto.com */}
+            {isLandingEntry && (
+              <>
+                <Route path="/" element={<Landing />} />
+                <Route path="/internal" element={<Navigate to="/auth" replace />} />
+                <Route path="/demo" element={<DemoLanding />} />
+              </>
+            )}
+
+            {/* Internal entry mode - fleet-internal.ewproto.com */}
+            {isInternalEntry && (
+              <>
+                <Route path="/" element={<Navigate to="/auth" replace />} />
+              </>
+            )}
+
+            {/* Demo entry mode - fleet-demo.ewproto.com */}
+            {isDemoEntry && (
+              <>
+                <Route path="/" element={<Navigate to="/demo/login" replace />} />
+              </>
+            )}
+
+            {/* Demo routes (available in landing and demo entry modes) */}
+            {(isLandingEntry || isDemoEntry) && (
               <>
                 <Route path="/demo" element={<DemoLanding />} />
                 <Route path="/demo/login" element={<DemoAuth />} />
@@ -60,8 +85,10 @@ const App = () => (
               </>
             )}
             
-            {/* Internal mode auth */}
-            {!isDemoMode && <Route path="/auth" element={<Auth />} />}
+            {/* Auth routes (available in landing and internal entry modes) */}
+            {(isLandingEntry || isInternalEntry) && (
+              <Route path="/auth" element={<Auth />} />
+            )}
             
             {/* Protected application routes */}
             <Route path="/*" element={<ProtectedRoute><Layout /></ProtectedRoute>}>

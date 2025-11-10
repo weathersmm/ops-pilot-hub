@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
-import { isDemoMode } from "@/config/appMode";
+import { isDemoEntry } from "@/config/entryMode";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -20,8 +20,8 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   if (!isAuthenticated) {
-    // Redirect to appropriate auth page based on mode
-    const authRoute = isDemoMode ? '/demo/login' : '/auth';
+    // Redirect to appropriate auth page based on entry mode
+    const authRoute = isDemoEntry ? '/demo/login' : '/auth';
     return <Navigate to={authRoute} replace />;
   }
 

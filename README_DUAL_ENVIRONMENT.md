@@ -1,11 +1,41 @@
-# Fleet Command - Dual Environment Setup
+# Fleet Command - Dual Environment & Entry Modes
 
 ## Overview
 
-Fleet Command supports two completely isolated environments:
+Fleet Command supports **three deployment patterns** within a single codebase, controlled by environment variables:
 
-1. **Internal Mode** - Production environment for LifeLine EMS staff
-2. **Demo Mode** - Public demonstration environment for prospects
+1. **Landing Entry** (`fleet.ewproto.com`) - Choice between internal and demo
+2. **Internal Entry** (`fleet-internal.ewproto.com`) - Direct staff access
+3. **Demo Entry** (`fleet-demo.ewproto.com`) - Direct public demo access
+
+Each mode accesses the same data layer but with different entry points and user experiences.
+
+## Domains & Entry Modes (ewproto.com)
+
+### Entry Modes Configuration
+
+Set `VITE_ENTRY_MODE` to control how users enter the application:
+
+| URL | Entry Mode | Behavior |
+|-----|------------|----------|
+| `fleet.ewproto.com` | `landing` | Shows landing page with choice: Internal or Demo |
+| `fleet-internal.ewproto.com` | `internal` | Direct redirect to internal dashboard (auth required) |
+| `fleet-demo.ewproto.com` | `demo` | Direct redirect to demo experience (public signup) |
+
+### Local Development with Entry Modes
+
+```bash
+# Landing mode - shows choice screen at /
+VITE_ENTRY_MODE=landing npm run dev
+
+# Internal-only mode - / redirects to /auth
+VITE_ENTRY_MODE=internal npm run dev
+
+# Demo-only mode - / redirects to /demo/login
+VITE_ENTRY_MODE=demo npm run dev
+```
+
+**Note**: Entry mode controls the routing/entry point. Data separation is controlled by `VITE_APP_MODE` and tenant type (see Data Isolation below).
 
 ## Architecture
 
@@ -239,9 +269,11 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 
 ### Key Files
 
-- `src/config/appMode.ts` - Mode detection and config
+- `src/config/entryMode.ts` - Entry mode detection (landing/internal/demo)
+- `src/config/appMode.ts` - App mode detection (internal/demo data)
 - `src/hooks/useTenantType.tsx` - Tenant type hook
 - `src/components/TenantRoute.tsx` - Route guard
+- `src/pages/Landing.tsx` - Landing page (choice screen)
 - `src/pages/DemoLanding.tsx` - Demo landing page
 - `src/pages/DemoAuth.tsx` - Demo signup/login
 - `supabase/functions/seed-demo-data/index.ts` - Demo data seeding
