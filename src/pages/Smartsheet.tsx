@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,9 +17,31 @@ interface SmartsheetSheet {
   modifiedAt?: string;
 }
 
+interface SheetColumn {
+  id: string;
+  title: string;
+}
+
+interface SheetCell {
+  displayValue?: string;
+  value?: string;
+}
+
+interface SheetRow {
+  id: string;
+  cells?: SheetCell[];
+}
+
+interface SheetDataDetails {
+  name: string;
+  columns: SheetColumn[];
+  rows: SheetRow[];
+  modifiedAt?: string;
+}
+
 interface SheetData {
   sheetId: string;
-  data: any;
+  data: SheetDataDetails | null;
   error: string | null;
 }
 
@@ -31,11 +53,7 @@ export default function Smartsheet() {
   const [fetchingData, setFetchingData] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadAvailableSheets();
-  }, []);
-
-  const loadAvailableSheets = async () => {
+  const loadAvailableSheets = useCallback(async () => {
     setLoading(true);
     try {
       console.log("Fetching available Smartsheet sheets...");
@@ -60,25 +78,29 @@ export default function Smartsheet() {
         title: "Sheets loaded",
         description: `Found ${data.data?.length || 0} Smartsheet sheets`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error loading sheets:", error);
       toast({
         title: "Error loading sheets",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const toggleSheetSelection = (sheetId: string) => {
+  useEffect(() => {
+    loadAvailableSheets();
+  }, [loadAvailableSheets]);
+
+  const toggleSheetSelection = useCallback((sheetId: string) => {
     setSelectedSheetIds(prev => 
       prev.includes(sheetId) 
         ? prev.filter(id => id !== sheetId)
         : [...prev, sheetId]
     );
-  };
+  }, []);
 
   const fetchSelectedSheets = async () => {
     if (selectedSheetIds.length === 0) {
@@ -118,11 +140,11 @@ export default function Smartsheet() {
         title: "Data fetched",
         description: `Successfully loaded ${successCount} of ${selectedSheetIds.length} sheets`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching sheet data:", error);
       toast({
         title: "Error fetching data",
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Unknown error',
         variant: "destructive",
       });
     } finally {
@@ -165,15 +187,15 @@ export default function Smartsheet() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {columns.map((col: any) => (
+                  {columns.map((col: SheetColumn) => (
                     <TableHead key={col.id}>{col.title}</TableHead>
                   ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.slice(0, 50).map((row: any) => (
+                {rows.slice(0, 50).map((row: SheetRow) => (
                   <TableRow key={row.id}>
-                    {row.cells?.map((cell: any, idx: number) => (
+                    {row.cells?.map((cell: SheetCell, idx: number) => (
                       <TableCell key={idx}>
                         {cell.displayValue || cell.value || '-'}
                       </TableCell>

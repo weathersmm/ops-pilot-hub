@@ -77,7 +77,7 @@ serve(async (req) => {
             data,
             error: null 
           };
-        } catch (error) {
+        } catch (error: unknown) {
           console.error(`Exception fetching sheet ${sheetId}:`, error);
           return { 
             sheetId, 
@@ -96,7 +96,7 @@ serve(async (req) => {
 
     throw new Error('Invalid action or missing parameters');
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in smartsheet function:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
