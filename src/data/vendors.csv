@@ -1,0 +1,4 @@
+VendorId,Name,Service,Contact,Phone,Email,SLAHours
+V-LYTX,Lytx,Cameras,Support,800-000-0000,support@lytx.example,24
+V-OPIQ,Operative IQ,Logistics,Support,800-000-0001,support@operativeiq.example,24
+V-RADIO,Radio Shop,Radio/CAD Programming,Alex Rivera,555-0100,alex.rivera@example.org,48

@@ -52,6 +52,68 @@ export type Database = {
           },
         ]
       }
+      equipment_catalog: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          equipment_id: string
+          evidence_type: string | null
+          id: string
+          manufacturer: string | null
+          model: string | null
+          name: string
+          part_number: string | null
+          requires_calibration: boolean | null
+          service_interval_days: number | null
+          service_interval_miles: number | null
+          updated_at: string | null
+          vendor_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          equipment_id: string
+          evidence_type?: string | null
+          id?: string
+          manufacturer?: string | null
+          model?: string | null
+          name: string
+          part_number?: string | null
+          requires_calibration?: boolean | null
+          service_interval_days?: number | null
+          service_interval_miles?: number | null
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          equipment_id?: string
+          evidence_type?: string | null
+          id?: string
+          manufacturer?: string | null
+          model?: string | null
+          name?: string
+          part_number?: string | null
+          requires_calibration?: boolean | null
+          service_interval_days?: number | null
+          service_interval_miles?: number | null
+          updated_at?: string | null
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_catalog_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evidence_files: {
         Row: {
           created_at: string | null
@@ -293,6 +355,60 @@ export type Database = {
           },
         ]
       }
+      vehicle_equipment: {
+        Row: {
+          created_at: string | null
+          equipment_id: string
+          id: string
+          installed_date: string | null
+          last_service_date: string | null
+          next_service_date: string | null
+          notes: string | null
+          serial_number: string | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          equipment_id: string
+          id?: string
+          installed_date?: string | null
+          last_service_date?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          equipment_id?: string
+          id?: string
+          installed_date?: string | null
+          last_service_date?: string | null
+          next_service_date?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_equipment_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_equipment_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_tasks: {
         Row: {
           approved_by: string | null
@@ -380,22 +496,32 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          build_type: string | null
+          chp_permit: string | null
+          commissioning_template: string | null
           created_at: string | null
           created_by: string | null
+          dmv_expiration: string | null
           fuel_type: string | null
           id: string
           in_service_date: string | null
+          la_county_expiration: string | null
           last_chp_inspection: string | null
           lytx_id: string | null
           make: string
+          mod_type: string | null
           model: string
           next_chp_inspection: string | null
+          oc_expiration: string | null
           odometer: number | null
           plate: string
           primary_depot: string | null
           radio_id: string | null
           region_id: string | null
+          riverside_expiration: string | null
+          smog_expiration: string | null
           status: Database["public"]["Enums"]["vehicle_status"]
+          status_date: string | null
           type: Database["public"]["Enums"]["vehicle_type"]
           updated_at: string | null
           vehicle_id: string
@@ -403,22 +529,32 @@ export type Database = {
           year: number
         }
         Insert: {
+          build_type?: string | null
+          chp_permit?: string | null
+          commissioning_template?: string | null
           created_at?: string | null
           created_by?: string | null
+          dmv_expiration?: string | null
           fuel_type?: string | null
           id?: string
           in_service_date?: string | null
+          la_county_expiration?: string | null
           last_chp_inspection?: string | null
           lytx_id?: string | null
           make: string
+          mod_type?: string | null
           model: string
           next_chp_inspection?: string | null
+          oc_expiration?: string | null
           odometer?: number | null
           plate: string
           primary_depot?: string | null
           radio_id?: string | null
           region_id?: string | null
+          riverside_expiration?: string | null
+          smog_expiration?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
+          status_date?: string | null
           type?: Database["public"]["Enums"]["vehicle_type"]
           updated_at?: string | null
           vehicle_id: string
@@ -426,22 +562,32 @@ export type Database = {
           year: number
         }
         Update: {
+          build_type?: string | null
+          chp_permit?: string | null
+          commissioning_template?: string | null
           created_at?: string | null
           created_by?: string | null
+          dmv_expiration?: string | null
           fuel_type?: string | null
           id?: string
           in_service_date?: string | null
+          la_county_expiration?: string | null
           last_chp_inspection?: string | null
           lytx_id?: string | null
           make?: string
+          mod_type?: string | null
           model?: string
           next_chp_inspection?: string | null
+          oc_expiration?: string | null
           odometer?: number | null
           plate?: string
           primary_depot?: string | null
           radio_id?: string | null
           region_id?: string | null
+          riverside_expiration?: string | null
+          smog_expiration?: string | null
           status?: Database["public"]["Enums"]["vehicle_status"]
+          status_date?: string | null
           type?: Database["public"]["Enums"]["vehicle_type"]
           updated_at?: string | null
           vehicle_id?: string
@@ -464,6 +610,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vendors: {
+        Row: {
+          contact: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          service: string | null
+          sla_hours: number | null
+          updated_at: string | null
+          vendor_id: string
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          service?: string | null
+          sla_hours?: number | null
+          updated_at?: string | null
+          vendor_id: string
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          service?: string | null
+          sla_hours?: number | null
+          updated_at?: string | null
+          vendor_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

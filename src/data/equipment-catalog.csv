@@ -1,0 +1,9 @@
+EquipmentId,Name,Category,Manufacturer,Model,PartNumber,Description,ServiceIntervalMiles,ServiceIntervalDays,RequiresCalibration,EvidenceType,VendorId
+EQ-LYTX,Lytx Camera,Telematics,Lytx,,,Dash camera for safety & telematics,10000,365,False,Image,V-LYTX
+EQ-RADIO,Mobile Radio,Comms,,,,Primary mobile radio,12000,365,False,Image,V-RADIO
+EQ-MDC,MDC/Tablet,IT,,,,Mobile data computer / tablet,10000,365,False,Image,
+EQ-STRYKER-COT,Stryker Power-PRO XT Cot,Clinical,Stryker,,,Primary patient cot,0,180,True,Image,
+EQ-POWER-LOAD,Stryker Power-LOAD,Clinical,Stryker,,,Powered cot fastener,0,180,True,Image,
+EQ-DRUGSAFE,Drug Safe,Clinical,,,,Controlled substance vault,0,365,True,Image,
+EQ-OXY-BRACKET,Oxygen Bracket,Clinical,,,,O2 bottle bracket,0,365,False,Image,
+EQ-BACKBOARD,Backboard,Clinical,,,,Immobilization backboard,0,365,False,Image,
