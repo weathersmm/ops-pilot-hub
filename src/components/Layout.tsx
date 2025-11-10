@@ -9,6 +9,7 @@ const navItems = [
   { path: "/", label: "Operations", icon: Activity },
   { path: "/fleet", label: "Fleet", icon: Truck },
   { path: "/executive", label: "Executive", icon: BarChart3 },
+  { path: "/admin", label: "Admin", icon: Menu },
 ];
 
 export function Layout() {
