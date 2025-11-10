@@ -272,11 +272,13 @@ VITE_SUPABASE_PUBLISHABLE_KEY=...
 - `src/config/entryMode.ts` - Entry mode detection (landing/internal/demo)
 - `src/config/appMode.ts` - App mode detection (internal/demo data)
 - `src/hooks/useTenantType.tsx` - Tenant type hook
-- `src/components/TenantRoute.tsx` - Route guard
+- `src/components/TenantRoute.tsx` - Route guard with entry mode enforcement
 - `src/pages/Landing.tsx` - Landing page (choice screen)
+- `src/pages/Auth.tsx` - Internal auth with Google SSO
 - `src/pages/DemoLanding.tsx` - Demo landing page
 - `src/pages/DemoAuth.tsx` - Demo signup/login
 - `supabase/functions/seed-demo-data/index.ts` - Demo data seeding
+- `docs/SSO_SETUP.md` - Google SSO configuration guide
 
 ## Future Enhancements
 
