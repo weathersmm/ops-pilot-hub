@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck, CheckCircle, Users, BarChart } from "lucide-react";
+import { Truck, CheckCircle, Users, BarChart, Shield } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { isLandingEntry } from "@/config/entryMode";
 
 export default function DemoLanding() {
   const navigate = useNavigate();
@@ -15,8 +16,14 @@ export default function DemoLanding() {
             <h1 className="text-2xl font-bold">Fleet Command Demo</h1>
           </div>
           <div className="flex gap-2">
+            {isLandingEntry && (
+              <Button variant="ghost" onClick={() => navigate('/auth')} className="gap-2">
+                <Shield className="h-4 w-4" />
+                Internal Staff
+              </Button>
+            )}
             <Button variant="outline" onClick={() => navigate('/demo/login')}>
-              Login
+              Demo Login
             </Button>
             <Button onClick={() => navigate('/demo/signup')}>
               Try Demo
@@ -89,7 +96,7 @@ export default function DemoLanding() {
           </Card>
         </section>
 
-        <section className="text-center">
+        <section className="space-y-6">
           <Card className="max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="text-2xl">Ready to explore?</CardTitle>
@@ -106,6 +113,26 @@ export default function DemoLanding() {
               </Button>
             </CardContent>
           </Card>
+
+          {isLandingEntry && (
+            <Card className="max-w-2xl mx-auto border-primary/50">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <CardTitle>LifeLine Internal Staff</CardTitle>
+                </div>
+                <CardDescription>
+                  Access full admin features including CSV import, Smartsheet integration, and user management
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button size="lg" variant="default" onClick={() => navigate('/auth')} className="gap-2">
+                  <Shield className="h-4 w-4" />
+                  Sign In with Microsoft or Google
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </section>
       </main>
 
