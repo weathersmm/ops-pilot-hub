@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,68 @@ import { passwordSchema } from "@/lib/validation";
 import { isInternalEntry } from "@/config/entryMode";
 
 export default function Auth() {
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [invitationRole, setInvitationRole] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check for invitation token
+  useEffect(() => {
+    const invitationToken = searchParams.get("invitation");
+    if (invitationToken) {
+      fetchInvitation(invitationToken);
+    }
+  }, [searchParams]);
+
+  const fetchInvitation = async (token: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("invitations")
+        .select("email, role, status, expires_at")
+        .eq("token", token)
+        .single();
+
+      if (error || !data) {
+        toast({
+          title: "Invalid invitation",
+          description: "This invitation link is not valid.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data.status !== "pending") {
+        toast({
+          title: "Invitation already used",
+          description: "This invitation has already been accepted.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (new Date(data.expires_at) < new Date()) {
+        toast({
+          title: "Invitation expired",
+          description: "This invitation has expired.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setEmail(data.email);
+      setInvitationRole(data.role);
+      toast({
+        title: "Invitation found",
+        description: `You've been invited to join as ${data.role}. Please create your account.`,
+      });
+    } catch (error: any) {
+      console.error("Error fetching invitation:", error);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,7 +224,11 @@ export default function Auth() {
           </div>
           <CardTitle className="text-2xl">Fleet Command</CardTitle>
           <CardDescription>
-            {isInternalEntry ? "Internal Staff Sign-In" : "Operations & Fleet Management System"}
+            {invitationRole 
+              ? `You've been invited to join as ${invitationRole}` 
+              : isInternalEntry 
+              ? "Internal Staff Sign-In" 
+              : "Operations & Fleet Management System"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -347,6 +407,7 @@ export default function Auth() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    disabled={!!invitationRole}
                   />
                 </div>
                 <div className="space-y-2">

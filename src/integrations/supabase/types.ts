@@ -486,6 +486,42 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: Database["public"]["Enums"]["invitation_status"]
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: Database["public"]["Enums"]["invitation_status"]
+          token?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1032,6 +1068,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "supervisor" | "technician" | "viewer"
       inspection_result: "Pass" | "Fail" | "Pending"
+      invitation_status: "pending" | "accepted" | "expired"
       task_category:
         | "Safety"
         | "Compliance"
@@ -1184,6 +1221,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "supervisor", "technician", "viewer"],
       inspection_result: ["Pass", "Fail", "Pending"],
+      invitation_status: ["pending", "accepted", "expired"],
       task_category: [
         "Safety",
         "Compliance",

@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Shield, User, Eye, Wrench } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import InviteUserDialog from "./InviteUserDialog";
 
 type UserRole = "admin" | "supervisor" | "technician" | "viewer";
 type TenantType = "internal" | "demo";
@@ -133,10 +134,15 @@ export default function UserManagement() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>User Management</CardTitle>
-        <CardDescription>
-          Manage user roles and permissions. New SSO users start as 'viewer' and can be promoted as needed.
-        </CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>
+              Manage user roles and permissions. New SSO users start as 'viewer' and can be promoted as needed.
+            </CardDescription>
+          </div>
+          <InviteUserDialog />
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
