@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,12 @@ const SMARTSHEET_BASE_URL = 'https://api.smartsheet.com/2.0';
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Input validation schema
+const requestSchema = z.object({
+  action: z.enum(['list', 'fetch', 'sync']),
+  sheetIds: z.array(z.string()).max(50).optional()
+});
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -19,12 +26,76 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create authenticated Supabase client
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check tenant type - only internal users allowed
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('tenant_type')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.tenant_type !== 'internal') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Internal users only' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check role - only admin/supervisor allowed
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!roleData || !['admin', 'supervisor'].includes(roleData.role)) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Admin or Supervisor role required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (!SMARTSHEET_API_KEY) {
       throw new Error('SMARTSHEET_API_KEY is not configured');
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { action, sheetIds } = await req.json();
+    // Validate request body
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request', 
+          details: validation.error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { action, sheetIds } = validation.data;
 
     console.log('Smartsheet request:', { action, sheetIds });
 

@@ -13,21 +13,48 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Get auth header for user validation
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create authenticated client to verify user
+    const supabaseAuth = createClient(supabaseUrl, supabaseServiceKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Use authenticated user's ID, not from request body
+    const userId = user.id;
+    console.log('Seeding demo data for authenticated user:', userId);
+
+    // Create service role client for data operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const { user_id } = await req.json();
-
-    console.log('Seeding demo data for user:', user_id);
 
     // Verify user is a demo user
     const { data: profile } = await supabase
       .from('profiles')
       .select('tenant_type')
-      .eq('id', user_id)
+      .eq('id', userId)
       .single();
 
     if (profile?.tenant_type !== 'demo') {
-      throw new Error('User is not a demo user');
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Demo users only' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Create demo vehicles
