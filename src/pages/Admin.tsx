@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CsvImport from "@/components/CsvImport";
+import UserManagement from "@/components/UserManagement";
 import { Settings } from "lucide-react";
 
 export default function Admin() {
@@ -25,9 +26,7 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="users">
-          <div className="text-center py-12 text-muted-foreground">
-            User management coming soon
-          </div>
+          <UserManagement />
         </TabsContent>
 
         <TabsContent value="settings">
